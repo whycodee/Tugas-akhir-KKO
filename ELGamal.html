@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enkripsi/Dekripsi ElGamal</title>
+    <!-- Tambahkan link Bootstrap CSS -->
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      #results {
+        width: 100%; /* Lebar textarea 100% dari parent */
+        height: 200px; /* Tinggi textarea (sesuaikan sesuai kebutuhan) */
+        resize: none; /* Memungkinkan pengguna untuk meresize secara vertikal */
+        overflow-y: auto; /* Mengaktifkan scrollbar vertical jika teks terlalu panjang */
+      }
+    </style>
+  </head>
+  <body class="container mt-5">
+    <h1 class="mb-4">Enkripsi/Dekripsi ElGamal</h1>
+
+    <form id="cryptoForm">
+      <div class="form-group">
+        <label for="plaintext">Masukkan teks: </label>
+        <input
+          type="text"
+          class="form-control"
+          id="plaintext"
+          name="plaintext"
+          required
+        />
+
+      </div>
+      <button
+        type="button"
+        class="btn btn-primary"
+        onclick="enkripsiDanDekripsi()"
+      >
+        Enkripsi dan Dekripsi
+      </button>
+    </form>
+
+    <h2 class="mt-4">Hasil:</h2>
+    <div id="results" class="border p-3"></div>
+    <p id="runtime" class="mt-3"></p>
+
+    <!-- Tambahkan link Bootstrap JS dan Popper.js -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+    <script>
+      // Fungsi untuk menghasilkan pasangan kunci ElGamal
+      function generateElGamalKeyPair() {
+        const p = 23; // Bilangan prima p
+        const g = 5; // Generator g
+        const x = 6; // Kunci privat x
+        const y = modPow(g, x, p); // Kunci publik y
+
+        return {
+          publicKey: { p, g, y },
+          privateKey: x,
+        };
+      }
+
+      function enkripsiDanDekripsi() {
+        const start = new Date().getTime(); // Inisialisasi waktu awal
+        const teksAsli = document.getElementById("plaintext").value;
+
+        // Menghasilkan pasangan kunci ElGamal
+        const pasanganKunci = generateElGamalKeyPair();
+
+        // Enkripsi
+        const k = 15; // Nilai acak k
+        const teksEnkripsi = teksAsli
+          .split("")
+          .map((char) => {
+            const charCode = char.charCodeAt(0);
+            const r = modPow(
+              pasanganKunci.publicKey.g,
+              k,
+              pasanganKunci.publicKey.p
+            );
+            const c =
+              (charCode *
+                modPow(
+                  pasanganKunci.publicKey.y,
+                  k,
+                  pasanganKunci.publicKey.p
+                )) %
+              pasanganKunci.publicKey.p;
+            return `${r} ${c}`;
+          })
+          .join(" ");
+
+        // Dekripsi
+        const teksDekripsi = teksEnkripsi
+          .split(" ")
+          .map((value, index) => {
+            if (index % 2 === 0) {
+              const charCode = parseInt(value);
+              return String.fromCharCode(charCode);
+            }
+          })
+          .join("");
+
+        // Menampilkan hasil
+        const hasilTeks = `Teks Terenkripsi: ${teksEnkripsi}\nTeks Terdekripsi: ${teksDekripsi}`;
+        document.getElementById("results").innerText = hasilTeks;
+
+        // Menampilkan waktu eksekusi
+        const end = new Date().getTime();
+        // Menampilkan waktu eksekusi dalam detik dengan presisi desimal yang lebih tinggi
+        const waktuEksekusiDetik = (end - start) / 1000; // Ubah satuan waktu menjadi detik
+        document.getElementById(
+          "runtime"
+        ).innerText = `Waktu Eksekusi: ${waktuEksekusiDetik.toFixed(9)} detik`;
+      }
+
+      // Fungsi untuk menghitung invers modulo
+      function modInverse(a, m) {
+        for (let i = 1; i < m; i++) {
+          if ((a * i) % m === 1) {
+            return i;
+          }
+        }
+        return 1;
+      }
+
+      // Fungsi untuk menghitung a^b mod m
+      function modPow(a, b, m) {
+        let result = 1;
+        a = a % m;
+        while (b > 0) {
+          if (b % 2 === 1) {
+            result = (result * a) % m;
+          }
+          b = Math.floor(b / 2);
+          a = (a * a) % m;
+        }
+        return result;
+      }
+    </script>
+  </body>
+</html>

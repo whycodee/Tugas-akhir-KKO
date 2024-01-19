@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enkripsi/Dekripsi RSA</title>
+    <!-- Tambahkan link Bootstrap CSS -->
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      /* Menambahkan gaya CSS untuk textarea */
+      #results {
+        width: 100%; /* Lebar textarea 100% dari parent */
+        height: 200px; /* Tinggi textarea (sesuaikan sesuai kebutuhan) */
+        resize: none; /* Memungkinkan pengguna untuk meresize secara vertikal */
+        overflow-y: auto; /* Mengaktifkan scrollbar vertical jika teks terlalu panjang */
+      }
+    </style>
+  </head>
+  <body class="container mt-5">
+    <h1 class="mb-4">Enkripsi/Dekripsi RSA</h1>
+
+    <form id="cryptoForm">
+      <div class="form-group">
+        <label for="plaintext">Masukkan teks: </label>
+        <input
+          type="text"
+          class="form-control"
+          id="plaintext"
+          name="plaintext"
+          required
+        />
+      </div>
+      <button
+        type="button"
+        class="btn btn-primary"
+        onclick="enkripsiDanDekripsi()"
+      >
+        Enkripsi dan Dekripsi
+      </button>
+    </form>
+
+    <h2 class="mt-4">Hasil:</h2>
+<!-- Mengganti elemen div -->
+<div id="results" class="border p-3"></div>
+    <p id="runtime" class="mt-3"></p>
+
+    <!-- Tambahkan link Bootstrap JS dan Popper.js -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+    <script>
+      // Fungsi untuk menghasilkan pasangan kunci RSA
+      function generateRSAKeyPair() {
+        const p = 61; // Bilangan prima p
+        const q = 53; // Bilangan prima q
+
+        const n = p * q; // Modulus n
+        const totient = (p - 1) * (q - 1); // Totient (φ)
+
+        // Eksponen publik (e)
+        let e = 17;
+        while (e < totient) {
+          if (gcd(e, totient) === 1) {
+            break;
+          }
+          e++;
+        }
+
+        // Eksponen privat (d)
+        const d = modInverse(e, totient);
+
+        return {
+          publicKey: { e, n },
+          privateKey: { d, n },
+        };
+      }
+
+      // Fungsi untuk menghitung GCD (Greatest Common Divisor)
+      function gcd(a, b) {
+        return b === 0 ? a : gcd(b, a % b);
+      }
+
+      // Fungsi untuk menghitung invers modulo
+      function modInverse(a, m) {
+        for (let i = 1; i < m; i++) {
+          if ((a * i) % m === 1) {
+            return i;
+          }
+        }
+        return 1;
+      }
+
+      function enkripsiDanDekripsi() {
+        const start = new Date().getTime(); // Inisialisasi waktu awal
+        const teksAsli = document.getElementById("plaintext").value;
+
+        // Menghasilkan pasangan kunci RSA
+        const pasanganKunci = generateRSAKeyPair();
+
+        // Enkripsi
+        const teksEnkripsi = teksAsli.split("").map((char) => {
+          const charCode = char.charCodeAt(0);
+          return modPow(
+            charCode,
+            pasanganKunci.publicKey.e,
+            pasanganKunci.publicKey.n
+          );
+        });
+
+        // Dekripsi
+        const teksDekripsi = teksEnkripsi
+          .map((charCode) =>
+            String.fromCharCode(
+              modPow(
+                charCode,
+                pasanganKunci.privateKey.d,
+                pasanganKunci.privateKey.n
+              )
+            )
+          )
+          .join("");
+
+        // Menampilkan hasil
+        const hasilTeks = `Teks Terenkripsi: ${teksEnkripsi.join(
+          " "
+        )}<br><br>Teks Terdekripsi: ${teksDekripsi}`;
+        document.getElementById("results").innerHTML = hasilTeks;
+
+        // Menampilkan waktu eksekusi
+        const end = new Date().getTime();
+        // Menampilkan waktu eksekusi dalam detik dengan presisi desimal yang lebih tinggi
+const waktuEksekusiDetik = (end - start) / 1000; // Ubah satuan waktu menjadi detik
+document.getElementById("runtime").innerText = `Waktu Eksekusi: ${waktuEksekusiDetik.toFixed(9)} detik`;
+
+      }
+
+      // Fungsi untuk menghitung a^b mod m
+      function modPow(a, b, m) {
+        let result = 1;
+        a = a % m;
+        while (b > 0) {
+          if (b % 2 === 1) {
+            result = (result * a) % m;
+          }
+          b = Math.floor(b / 2);
+          a = (a * a) % m;
+        }
+        return result;
+      }
+    </script>
+  </body>
+</html>
